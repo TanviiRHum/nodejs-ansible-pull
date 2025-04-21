@@ -1,0 +1,45 @@
+---
+- name: Deploy Node.js Application
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Ensure Git is installed
+      apt:
+        name: git
+        state: present
+
+    - name: Clone Node.js app repository from GitHub
+      git:
+        repo: 'https://github.com/TanviiRHum/Nodejspull.git'
+        dest: /opt/nodejs-app
+        version: master
+        force: yes
+
+    - name: Ensure Node.js is installed
+      apt:
+        name: nodejs
+        state: present
+        update_cache: yes
+
+    - name: Ensure npm is installed
+      apt:
+        name: npm
+        state: present
+
+    - name: Install dependencies using npm
+      npm:
+        path: /opt/nodejs-app
+        state: present
+
+    - name: Start the Node.js application
+      shell: |
+        nohup node /opt/nodejs-app/app.js > /opt/nodejs-app/app.log 2>&1 &
+      args:
+        creates: /opt/nodejs-app/app.log
+
+    - name: Open port 3000 on the firewall
+      ufw:
+        rule: allow
+        name: 'Node.js'
+        port: 3000
+        proto: tcp
